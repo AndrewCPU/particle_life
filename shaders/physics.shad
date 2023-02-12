@@ -1,0 +1,41 @@
+__kernel void vec2_distance(__global float *vectors, __global float *minDistances, __global float *maxDistances, __global float *strengths, __global int *types, __global float *resultX, __global float *resultY, int num_points, int typeAmount) {
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+    if (i >= num_points || j >= num_points)
+        return;
+    if(i == j){
+        resultX[i * num_points + j] = 0;
+        resultY[i * num_points + j] = 0;
+        return;
+    }
+
+    float x_diff = vectors[2 * j] - vectors[2 * i];
+    float y_diff = vectors[2 * j + 1] - vectors[2 * i + 1];
+    float distance = sqrt(x_diff * x_diff + y_diff * y_diff);
+    int typeI = types[i];
+    int typeJ = types[j];
+
+    if(distance == 0) {
+        resultX[i * num_points + j] = 0;
+        resultY[i * num_points + j] = 0;
+        return;
+    }
+
+    float minDistance = minDistances[typeI * typeAmount + typeJ];
+    float maxDistance = maxDistances[typeI * typeAmount + typeJ];
+    float maxStrength = strengths[typeI * typeAmount + typeJ];
+
+    float force = 0;
+    if(distance < minDistance) {
+        force = ((1.0 / distance) - 1.0) * 0.73;
+    }
+    else if(distance > maxDistance){
+        force = 0;
+    }
+    else{
+        force = maxStrength * (sin(((distance - minDistance) / (maxDistance - minDistance)) * M_PI));
+    }
+
+    resultX[i * num_points + j] = x_diff / distance * force;
+    resultY[i * num_points + j] = y_diff / distance * force;
+}

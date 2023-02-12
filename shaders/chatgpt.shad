@@ -1,0 +1,50 @@
+#define pi 3.14159265358979323846
+#define TYPE_AMOUNT_SQUARED $TYPE_AMOUNT_SQUARED$
+#define PARTICLE_AMOUNT_SQUARED $PARTICLE_AMOUNT_SQUARED$
+__kernel void vec2_distance(__constant float *vectors, __constant float *minDistances, __constant float *maxDistances, __constant float *strengths, __constant int *types, __global float *resultX, __global float *resultY, int num_points, int typeAmount) {
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+    if (i >= num_points || j >= num_points)
+        return;
+    if(i == j){
+        resultX[i * num_points + j] = 0;
+        resultY[i * num_points + j] = 0;
+        return;
+    }
+
+    float2 vector_i = (float2)(vectors[2 * i], vectors[2 * i + 1]);
+    float2 vector_j = (float2)(vectors[2 * j], vectors[2 * j + 1]);
+    float2 vec = vector_j - vector_i;
+    float distance = length(vec);
+    int typeI = types[i];
+    int typeJ = types[j];
+    int typeIndex = typeI * typeAmount + typeJ;
+    __local float localMinDistances[TYPE_AMOUNT_SQUARED];
+    __local float localMaxDistances[TYPE_AMOUNT_SQUARED];
+    __local float localStrengths[TYPE_AMOUNT_SQUARED];
+    localMinDistances[typeIndex] = minDistances[typeIndex];
+    localMaxDistances[typeIndex] = maxDistances[typeIndex];
+    localStrengths[typeIndex] = strengths[typeIndex];
+
+    float maxDistance = localMaxDistances[typeIndex];
+
+    if(distance >= maxDistance) {
+        resultX[i * num_points + j] = 0;
+        resultY[i * num_points + j] = 0;
+        return;
+    }
+
+    float minDistance = localMinDistances[typeIndex];
+    float maxStrength = localStrengths[typeIndex];
+
+    float force = 0;
+    if(distance < minDistance) {
+        force = ((1.0 / distance) - 1.0) * 0.73;
+    }
+    else{
+        force = maxStrength * (sin(((distance - minDistance) / (maxDistance - minDistance)) * pi));
+    }
+    float2 forceVec = vec * force / distance;
+    atomic_add(&resultX[i], forceVec.x);
+    atomic_add(&resultY[i], forceVec.y);
+}
