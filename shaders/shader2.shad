@@ -1,40 +1,51 @@
 #define pi 3.14159265358979323846
-#define TYPE_AMOUNT_SQUARED $TYPE_AMOUNT_SQUARED$
+#define TYPE_AMOUNT $TYPE_AMOUNT$
 #define PARTICLE_AMOUNT_SQUARED $PARTICLE_AMOUNT_SQUARED$
 #define PARTICLE_AMOUNT $PARTICLE_AMOUNT$
-
+#define POW 100
+#define VARIANCE  0.113056
+#define PRECALC_VARIANCE -8.84517407303
 __kernel void vec2_distance(__constant float *vectors, __constant float *minDistances,
                             __constant float *maxDistances, __constant float *strengths,
-                            __constant int *types, __global float *resultX, __global float *resultY,
-                            int num_points, int typeAmount) {
-
+                            __constant uchar *types, __global float *resultX, __global float *resultY) {
     int i = get_global_id(0);
-    if(i >= num_points)
-        return;
-    int typeI = types[i];
-    float2 vector_i = (float2)(vectors[2 * i], vectors[2 * i + 1]);
+    uchar typeI = types[i];
+    int iv = 2 * i;
+    float2 vector_i = (float2)(vectors[iv], vectors[iv + 1]);
     float2 ourVect = (float2)(0, 0);
-    for(private int j = 0; j<num_points; j++){
+    int row = typeI * TYPE_AMOUNT;
+    for(private int j = 0; j<PARTICLE_AMOUNT; j++){
         if(j == i) continue;
-        float2 vector_j = (float2)(vectors[2 * j], vectors[2 * j + 1]);
-        float2 vec = vector_j - vector_i;
-        float distance = length(vec);
-        int typeJ = types[j];
-        int typeIndex = typeI * typeAmount + typeJ;
+        int jv = j * 2;
+
+        float2 vec =  (float2)(vectors[jv], vectors[jv + 1]) - vector_i;
+        float2 dot = vec * vec;
+        float distanceSquared = dot.x + dot.y;
+
+        int typeIndex = row + types[j];
+
         float maxDistance = maxDistances[typeIndex];
-        if(distance >= maxDistance)
+        if(distanceSquared >= maxDistance * maxDistance)
             continue;
+
         float minDistance = minDistances[typeIndex];
-        float maxStrength = strengths[typeIndex];
-        float force = 0;
-        if(distance < minDistance) {
-            force = ((1.0 / distance) - 1.0) * 0.73;
+        float2 normalizedVector = fast_normalize(vec);
+        float diff = distanceSquared -  minDistance * minDistance;
+        if(diff <= 0) {
+            ourVect += normalizedVector * (float)(((1.0-diff)*0.73f) / diff);        // * 0.73f);  // * rsqrt(distanceSquared);
+            continue;
         }
         else{
-            force = maxStrength * (sin(((distance - minDistance) / (maxDistance - minDistance)) * pi));
+            //float distance2 = vec.x * normalizedVector.x + vec.y*normalizedVector.y;
+            float xmm = (sqrt(distanceSquared) - minDistance)/(maxDistance - minDistance) - 0.5;
+            ourVect += normalizedVector * (float)(strengths[typeIndex] * exp(xmm * xmm * (PRECALC_VARIANCE)));
+            continue;
+           // float xmm = (distance - minDistance)/(maxDistance - minDistance) - 0.5;
+
+          //  float percent = (distance - minDistance)/(maxDistance - minDistance);
+          //  float power = (strengths[typeIndex] * exp(-(xmm * xmm) * (PRECALC_VARIANCE)));
+           // ourVect += vec * power;  // / distance;
         }
-        float2 forceVec = vec * force / distance;
-        ourVect += forceVec;
       }
       resultX[i] = ourVect.x;
       resultY[i] = ourVect.y;
