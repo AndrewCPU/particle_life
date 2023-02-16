@@ -21,6 +21,7 @@
         </dependency>
     </dependencies>
     <build>
+        <finalName>particle_life</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
