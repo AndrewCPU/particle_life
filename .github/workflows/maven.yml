@@ -19,11 +19,28 @@ jobs:
         java-version: 17
         distribution: microsoft
 
+    - name: Get project version
+      run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+      id: get_version
+      shell: bash
+
     - name: Build with Maven
       run: mvn clean package
+   
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      id: create_release
+      with:
+        tag_name: v${{ steps.get_version.outputs.stdout }}
+        release_name: v${{ steps.get_version.outputs.stdout }}
+        draft: false
+        prerelease: false
 
     - name: Release JAR
       uses: actions/upload-artifact@v2
       with:
         name: particle_life-jar-with-dependencies.jar
         path: target/particle_life-jar-with-dependencies.jar
+        tag_name: ${{ steps.create_release.outputs.tag_name }}
