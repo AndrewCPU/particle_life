@@ -27,4 +27,3 @@ jobs:
       with:
         name: particle_life-jar-with-dependencies.jar
         path: target/particle_life-jar-with-dependencies.jar
-        distribution: production
