@@ -43,4 +43,3 @@ jobs:
       with:
         name: particle_life-jar-with-dependencies.jar
         path: target/particle_life-jar-with-dependencies.jar
-        tag_name: ${{ steps.create_release.outputs.tag_name }}
