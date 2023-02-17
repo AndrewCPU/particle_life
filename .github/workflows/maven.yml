@@ -17,12 +17,39 @@ jobs:
       uses: actions/setup-java@v2
       with:
         java-version: 17
+        distribution: microsoft
 
+    - name: Get project version
+      run: echo "::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+      id: get_version
+      shell: sh
+    
     - name: Build with Maven
       run: mvn clean package
-
+   
     - name: Release JAR
       uses: actions/upload-artifact@v2
       with:
         name: particle_life-jar-with-dependencies.jar
         path: target/particle_life-jar-with-dependencies.jar
+     
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      id: create_release
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: v${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+
+   
+    - name: Increment project version
+      run: |
+        version=$(echo "${{ steps.get_version.outputs.version }}" | awk -F. '{$NF = $NF + 1; OFS="."; print}')
+        echo "New version: $version"
+        sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
+      shell: sh
+
+
