@@ -47,7 +47,14 @@ jobs:
    
     - name: Increment project version
       run: |
-        version=$(echo "${{ steps.get_version.outputs.version }}" | awk -F. '{ if (NF >= 2) { $NF = $NF + 1; OFS="."; print $0 } else { print $NF + 1 } }' | tr -d '\n')
+        version=$(echo "${{ steps.get_version.outputs.version }}" | awk '
+        BEGIN {
+          version = "1.5-SNAPSHOT"
+          split(version, parts, ".")
+          parts[2]++
+          new_version = parts[1] "." parts[2] "-SNAPSHOT"
+          print new_version
+        }'
         echo "New version: $version"
         sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
       shell: sh
