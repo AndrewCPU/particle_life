@@ -19,10 +19,8 @@ jobs:
         java-version: 17
         distribution: microsoft
 
-    - name: Get project version
-      run: echo "::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
-      id: get_version
-      shell: sh
+    - name: Set Maven version
+      run: mvn versions:set -DnewVersion=${GITHUB_RUN_NUMBER}
     
     - name: Build with Maven
       run: mvn clean package
@@ -53,29 +51,3 @@ jobs:
         asset_path: target/particle_life-jar-with-dependencies.jar
         asset_name: particle_life-jar-with-dependencies.jar
         asset_content_type: application/java-archive
-
-    - name: Increment project version
-      id: increment_version
-      run: |
-        version=$(echo "${{ steps.get_version.outputs.version }}" | awk '
-        BEGIN {
-          version = "1.5-SNAPSHOT"
-          split(version, parts, ".")
-          parts[2]++
-          new_version = parts[1] "." parts[2] "-SNAPSHOT"
-          print new_version
-        }')
-        echo "New version: $version"
-        sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
-        echo "::set-output name=version::$version"
-      shell: sh
-
-    - name: Commit and push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      run: |
-        git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git add pom.xml
-        git commit -m "Increment version to ${{ steps.increment_version.outputs.version }}"
-        git push origin HEAD
