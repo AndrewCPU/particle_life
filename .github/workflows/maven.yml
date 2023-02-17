@@ -44,7 +44,16 @@ jobs:
         draft: false
         prerelease: false
 
-   
+    - name: Upload artifact to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/particle_life-jar-with-dependencies.jar
+        asset_name: particle_life-jar-with-dependencies.jar
+        asset_content_type: application/java-archive
+
     - name: Increment project version
       id: increment_version
       run: |
@@ -60,7 +69,6 @@ jobs:
         sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
         echo "::set-output name=version::$version"
       shell: sh
-
 
     - name: Commit and push changes
       uses: actions/github-script@0.8.0
