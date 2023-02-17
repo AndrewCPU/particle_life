@@ -20,9 +20,14 @@ jobs:
         distribution: microsoft
 
     - name: Get project version
-      run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+      run: |
+        version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "Project version: $version"
       id: get_version
-      shell: bash
+      shell: sh
+    
+    
+    
 
     - name: Build with Maven
       run: mvn clean package
