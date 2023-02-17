@@ -37,8 +37,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       id: create_release
       with:
-        tag_name: v${{ steps.get_version.outputs.version }}
-        release_name: v${{ steps.get_version.outputs.version }}
+        tag_name: v${GITHUB_RUN_NUMBER}
+        release_name: v${GITHUB_RUN_NUMBER}
         draft: false
         prerelease: false
 
