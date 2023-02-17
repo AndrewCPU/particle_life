@@ -54,7 +54,7 @@ jobs:
           parts[2]++
           new_version = parts[1] "." parts[2] "-SNAPSHOT"
           print new_version
-        }'
+        }')
         echo "New version: $version"
         sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
       shell: sh
