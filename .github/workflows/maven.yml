@@ -46,6 +46,7 @@ jobs:
 
    
     - name: Increment project version
+      id: increment_version
       run: |
         version=$(echo "${{ steps.get_version.outputs.version }}" | awk '
         BEGIN {
@@ -57,6 +58,7 @@ jobs:
         }')
         echo "New version: $version"
         sed -i "s/<version>.*<\/version>/<version>$version<\/version>/g" pom.xml
+        echo "::set-output name=version::$version"
       shell: sh
 
 
@@ -68,5 +70,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           git add pom.xml
-          git commit -m "Increment version to $version"
+          git commit -m "Increment version to ${{ steps.increment_version.outputs.version }}"
           git push origin HEAD
