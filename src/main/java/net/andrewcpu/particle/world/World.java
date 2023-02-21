@@ -19,6 +19,7 @@ public class World {
 	private ScheduledFuture future;
 	private ParticleAffection[][] affectionArray = new ParticleAffection[ParticleType.values().length][ParticleType.values().length];
 
+	public List<Double> averageTimes = new ArrayList<>();
 
 
 	public long getTickRate() {
@@ -123,6 +124,8 @@ public class World {
 		return times.stream().mapToDouble(i -> (double)i).average().getAsDouble();
 	}
 
+
+
 	public void tick() {
 		if(lastStart == -1){
 			lastStart = System.currentTimeMillis();
@@ -131,7 +134,9 @@ public class World {
 			if(lastStart != -1){
 				times.add(System.currentTimeMillis() - lastStart);
 				if(times.size() % 50 == 0){
-					System.out.println("Average physics time: " + getAverageTime() + "ms");
+					double averageTimeMS = getAverageTime();
+					averageTimes.add(averageTimeMS );
+					System.out.println("Average physics time: " + averageTimeMS + "ms");
 					times.clear();
 				}
 			}

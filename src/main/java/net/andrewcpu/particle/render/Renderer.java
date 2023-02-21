@@ -6,6 +6,7 @@ import net.andrewcpu.particle.physics.Vector2d;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.text.DecimalFormat;
 
 import static net.andrewcpu.particle.constants.WorldConstant.PARTICLE_DEFAULT_SIZE;
 
@@ -17,6 +18,47 @@ public class Renderer {
 			frame = bufferedImage;
 		}
 		return frame;
+	}
+	DecimalFormat decimalFormat = new DecimalFormat("0.00");
+
+
+	private void drawOverlays(Viewport viewport, World world, Graphics g){
+		int height = 60;
+		int maxCount = 10;
+		int stepWidth = 10;
+		int start = world.averageTimes.size() - 1;
+		int end = world.averageTimes.size() - 1;
+		start -= maxCount;
+		if(start < 0){
+			start = 0;
+		}
+		int xPosition = 200;
+		int n = 0;
+		int lastX = xPosition;
+		int lastY = -1;
+		for(int i = start; i<end; i++){
+			if(lastY == -1){
+				double d = world.averageTimes.get(i);
+				xPosition += stepWidth * n;
+				n++;
+				lastX = xPosition;
+				lastY = (int)(height - (d / 20.0 * height));
+				continue;
+			}
+			double d = world.averageTimes.get(i);
+			xPosition += stepWidth * n;
+			int x = (int)(xPosition);
+			int y = (int)(height - (d / 20.0 * height));
+			g.setColor(Color.GREEN);
+			g.drawLine(x, y, lastX, lastY);
+			lastX = x;
+			lastY = y;
+			n++;
+		}
+		g.drawString("Physics Tick: " + decimalFormat.format(world.averageTimes.get(world.averageTimes.size() - 1)) + "ms", 200, height + 15);
+		g.drawLine(200,height, 650, height);
+		g.drawLine(200,height, 200, 0);
+		g.drawLine(650,0, 650, height);
 	}
 
 	public BufferedImage render(Viewport viewport, World world) {
@@ -44,7 +86,7 @@ public class Renderer {
 				g.fillOval(x - particleRadius, y - particleRadius, 2 * particleRadius, 2 * particleRadius);
 			}
 		}
-
+		drawOverlays(viewport, world, g);
 		g.dispose();
 		return canvas;
 	}
